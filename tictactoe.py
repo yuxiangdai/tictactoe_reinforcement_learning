@@ -302,22 +302,21 @@ if __name__ == '__main__':
         tie = 0
         for i in range(100):
             action = np.argmax(first_move_distr(policy, env))
-            env.play_against_random(action)
-            while not (env.done and env.check_win):
+            state, status, done = env.play_against_random(action)
+            while not (done):
                 # zero_indicies = np.where(env.grid == 0)[0]
                 state = torch.from_numpy(env.grid).long().unsqueeze(0)
                 state = torch.zeros(3,9).scatter_(0,state,1).view(1,27)
                 pr = policy(Variable(state))
                 # env.render()
                 action = np.argmax(pr.data)
-                env.play_against_random(action)
-            if env.check_win():
-                if env.turn == 2:
-                    win += 1
-                else:
-                    lose += 1
-            else:   
+                state, status, done = env.play_against_random(action)
+            if status == "win":
+                win += 1
+            if status == "tie":
                 tie += 1
+            if status == "lose":   
+                lose += 1
                 
         print(win, lose, tie)
  
