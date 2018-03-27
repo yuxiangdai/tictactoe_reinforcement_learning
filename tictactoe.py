@@ -171,11 +171,11 @@ def finish_episode(saved_rewards, saved_logprobs, gamma=1.0):
 def get_reward(status):
     """Returns a numeric given an environment status."""
     return {
-            Environment.STATUS_VALID_MOVE  : 1, # TODO
-            Environment.STATUS_INVALID_MOVE: -1,
-            Environment.STATUS_WIN         : 100,
+            Environment.STATUS_VALID_MOVE  : 0.1, # TODO
+            Environment.STATUS_INVALID_MOVE: -0.1,
+            Environment.STATUS_WIN         : 1,
             Environment.STATUS_TIE         : 0,
-            Environment.STATUS_LOSE        : -100
+            Environment.STATUS_LOSE        : -1
     }[status]
 
 def train(policy, env, gamma=1.0, log_interval=1000):
@@ -300,17 +300,23 @@ if __name__ == '__main__':
         win = 0
         lose = 0
         tie = 0
+        inv = 0
         for i in range(100):
             action = np.argmax(first_move_distr(policy, env))
             state, status, done = env.play_against_random(action)
+            print(i)
             while not (done):
                 # zero_indicies = np.where(env.grid == 0)[0]
-                state = torch.from_numpy(env.grid).long().unsqueeze(0)
+                state = torch.from_numpy(state).long().unsqueeze(0)
                 state = torch.zeros(3,9).scatter_(0,state,1).view(1,27)
                 pr = policy(Variable(state))
                 # env.render()
                 action = np.argmax(pr.data)
                 state, status, done = env.play_against_random(action)
+                if status == "inv":
+                    print("invalid move")
+                    inv += 1
+                    break
             if status == "win":
                 win += 1
             if status == "tie":
@@ -318,5 +324,5 @@ if __name__ == '__main__':
             if status == "lose":   
                 lose += 1
                 
-        print(win, lose, tie)
+        print(win, lose, tie, inv)
  
