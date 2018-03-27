@@ -165,11 +165,11 @@ def finish_episode(saved_rewards, saved_logprobs, gamma=1.0):
 def get_reward(status):
     """Returns a numeric given an environment status."""
     return {
-            Environment.STATUS_VALID_MOVE  : 0, # TODO
-            Environment.STATUS_INVALID_MOVE: 0,
-            Environment.STATUS_WIN         : 0,
-            Environment.STATUS_TIE         : 0,
-            Environment.STATUS_LOSE        : 0
+            Environment.STATUS_VALID_MOVE  : 1, # TODO
+            Environment.STATUS_INVALID_MOVE: -100,
+            Environment.STATUS_WIN         : 100,
+            Environment.STATUS_TIE         : 50,
+            Environment.STATUS_LOSE        : -10000
     }[status]
 
 def train(policy, env, gamma=1.0, log_interval=1000):
@@ -195,7 +195,6 @@ def train(policy, env, gamma=1.0, log_interval=1000):
         running_reward += R
 
         finish_episode(saved_rewards, saved_logprobs, gamma)
-
         if i_episode % log_interval == 0:
             print('Episode {}\tAverage return: {:.2f}'.format(
                 i_episode,
@@ -229,12 +228,6 @@ def load_weights(policy, episode):
 
 
 def part1():
-    
-    env = Environment()
-    for i in range(9):
-        env.step(i)
-        env.render()
-
     env = Environment()
     env.render()
     env.step(0)
@@ -249,9 +242,12 @@ def part1():
     env.step(5)
     env.step(4)
     env.step(3)
-        
     env.render()
 
+    env = Environment()
+    for i in range(9):
+        env.step(i)
+        env.render()
 
 def part3():
     assert (np.array_equal(compute_returns([0,0,0,1], 1.0), [1.0, 1.0, 1.0, 1.0]))
@@ -266,6 +262,7 @@ if __name__ == '__main__':
 
     # part1()
     # part3()
+
 
     if len(sys.argv) == 1:
         # `python tictactoe.py` to train the agent
