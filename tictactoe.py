@@ -10,6 +10,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torch.distributions
 from torch.autograd import Variable
+import matplotlib.pyplot as plt
 
 class Environment(object):
     """
@@ -102,7 +103,12 @@ class Policy(nn.Module):
     """
     The Tic-Tac-Toe Policy
     """
+
+
     def __init__(self, input_size=27, hidden_size=64, output_size=9):
+        # hidden_size = 128
+        # hidden_size = 256
+        # hidden_size = 32
         super(Policy, self).__init__()
         self.linn = nn.Linear(input_size, hidden_size)
         self.linn2 = nn.Linear(hidden_size, output_size)
@@ -166,10 +172,10 @@ def get_reward(status):
     """Returns a numeric given an environment status."""
     return {
             Environment.STATUS_VALID_MOVE  : 1, # TODO
-            Environment.STATUS_INVALID_MOVE: -100,
+            Environment.STATUS_INVALID_MOVE: -1,
             Environment.STATUS_WIN         : 100,
-            Environment.STATUS_TIE         : 50,
-            Environment.STATUS_LOSE        : -10000
+            Environment.STATUS_TIE         : 0,
+            Environment.STATUS_LOSE        : -100
     }[status]
 
 def train(policy, env, gamma=1.0, log_interval=1000):
@@ -179,7 +185,11 @@ def train(policy, env, gamma=1.0, log_interval=1000):
             optimizer, step_size=10000, gamma=0.9)
     running_reward = 0
 
-    for i_episode in count(1):
+    rng = 60000
+    y = []
+    x = []
+    # for i_episode in count(1):
+    for i_episode in range(rng):
         saved_rewards = []
         saved_logprobs = []
         state = env.reset()
@@ -195,10 +205,16 @@ def train(policy, env, gamma=1.0, log_interval=1000):
         running_reward += R
 
         finish_episode(saved_rewards, saved_logprobs, gamma)
+
         if i_episode % log_interval == 0:
             print('Episode {}\tAverage return: {:.2f}'.format(
                 i_episode,
                 running_reward / log_interval))
+
+            y.append(running_reward / log_interval)
+            x.append(i_episode)
+
+
             running_reward = 0
 
         if i_episode % (log_interval) == 0:
@@ -209,6 +225,13 @@ def train(policy, env, gamma=1.0, log_interval=1000):
             optimizer.step()
             scheduler.step()
             optimizer.zero_grad()
+
+    plt.plot(x, y)
+    plt.xlabel('Episodes')
+    plt.ylabel('Average Return')
+    plt.grid(True)
+    plt.title('Training curve')
+    plt.show()
 
 
 def first_move_distr(policy, env):
@@ -273,3 +296,28 @@ if __name__ == '__main__':
         ep = int(sys.argv[1])
         load_weights(policy, ep)
         print(first_move_distr(policy, env))
+
+        win = 0
+        lose = 0
+        tie = 0
+        for i in range(100):
+            action = np.argmax(first_move_distr(policy, env))
+            env.play_against_random(action)
+            while not (env.done and env.check_win):
+                # zero_indicies = np.where(env.grid == 0)[0]
+                state = torch.from_numpy(env.grid).long().unsqueeze(0)
+                state = torch.zeros(3,9).scatter_(0,state,1).view(1,27)
+                pr = policy(Variable(state))
+                # env.render()
+                action = np.argmax(pr.data)
+                env.play_against_random(action)
+            if env.check_win():
+                if env.turn == 2:
+                    win += 1
+                else:
+                    lose += 1
+            else:   
+                tie += 1
+                
+        print(win, lose, tie)
+ 
