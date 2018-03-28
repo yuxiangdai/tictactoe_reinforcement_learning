@@ -302,10 +302,10 @@ if __name__ == '__main__':
         lose = 0
         tie = 0
         inv = 0
-        for i in range(100):
+        for i in range(1000):
             action = np.argmax(first_move_distr(policy, env))
             state, status, done = env.play_against_random(action)
-            print(i)
+            #print(i)
             while not (done):
                 # zero_indicies = np.where(env.grid == 0)[0]
                 state = torch.from_numpy(state).long().unsqueeze(0)
