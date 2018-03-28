@@ -171,11 +171,12 @@ def finish_episode(saved_rewards, saved_logprobs, gamma=1.0):
 def get_reward(status):
     """Returns a numeric given an environment status."""
     return {
-            Environment.STATUS_VALID_MOVE  : 0.1, # TODO
-            Environment.STATUS_INVALID_MOVE: -0.1,
-            Environment.STATUS_WIN         : 1,
+            Environment.STATUS_VALID_MOVE  : 10, # TODO
+            Environment.STATUS_INVALID_MOVE: -100,
+            Environment.STATUS_WIN         : 100,
             Environment.STATUS_TIE         : 0,
-            Environment.STATUS_LOSE        : -1
+            Environment.STATUS_LOSE        : -100,
+            Environment.STATUS_DONE        : -99999
     }[status]
 
 def train(policy, env, gamma=1.0, log_interval=1000):
@@ -201,7 +202,7 @@ def train(policy, env, gamma=1.0, log_interval=1000):
             saved_logprobs.append(logprob)
             saved_rewards.append(reward)
 
-        R = compute_returns(saved_rewards)[0]
+        R = compute_returns(saved_rewards,gamma)[0]
         running_reward += R
 
         finish_episode(saved_rewards, saved_logprobs, gamma)
@@ -289,7 +290,7 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 1:
         # `python tictactoe.py` to train the agent
-        train(policy, env)
+        train(policy, env,gamma=0.9)
     else:
         # `python tictactoe.py <ep>` to print the first move distribution
         # using weightt checkpoint at episode int(<ep>)
